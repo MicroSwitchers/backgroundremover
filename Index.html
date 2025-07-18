@@ -1,0 +1,2175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magic Wand Image Editor with Edge Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 10px;
+            color: #e0e0e0;
+            margin: 0;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(0, 122, 204, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(0, 210, 211, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, rgba(0, 122, 204, 0.1) 0%, rgba(0, 210, 211, 0.1) 100%);
+            border-radius: 16px;
+            padding: 24px 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            filter: drop-shadow(0 4px 12px rgba(0, 122, 204, 0.3));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin: 0;
+            background: linear-gradient(135deg, #007acc, #00d2d3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-shadow: none;
+        }
+
+        .header-subtitle {
+            font-size: 1em;
+            color: #b0b0b0;
+            margin: 0;
+            font-weight: 400;
+            opacity: 0.85;
+        }
+
+        .header-tagline {
+            font-size: 0.85em;
+            color: #888;
+            margin: 8px 0 0 0;
+            font-style: italic;
+            opacity: 0.7;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+            max-width: 95vw;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .left-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 250px;
+        }
+
+        .right-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 250px;
+        }
+
+        .image-area {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .controls {
+            background: #2a2a2a;
+            border-radius: 4px;
+            padding: 12px;
+            border: 1px solid #444;
+        }
+
+        .control-section {
+            margin-bottom: 15px;
+        }
+
+        .control-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-section h3 {
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: #e0e0e0;
+            border-bottom: 1px solid #444;
+            padding-bottom: 4px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-group label {
+            font-size: 11px;
+            font-weight: 500;
+            opacity: 0.9;
+            color: #d0d0d0;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-button {
+            background: #007acc;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .file-button:hover {
+            background: #005a9e;
+        }
+
+        .tolerance-display {
+            font-size: 12px;
+            font-weight: 500;
+            background: #3a3a3a;
+            padding: 6px 12px;
+            border-radius: 3px;
+            border: 1px solid #555;
+        }
+
+        .algorithm-selector {
+            background: #3a3a3a;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            padding: 6px 12px;
+            border-radius: 3px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .algorithm-selector:hover {
+            background: #4a4a4a;
+        }
+
+        .algorithm-selector option {
+            background: #3a3a3a;
+            color: #e0e0e0;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #555;
+            border-radius: 2px;
+            outline: none;
+            transition: opacity .2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #007acc;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: #007acc;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .action-button {
+            background: #3a3a3a;
+            color: #e0e0e0;
+            padding: 6px 12px;
+            border: 1px solid #555;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .action-button:hover {
+            background: #4a4a4a;
+            border-color: #666;
+        }
+
+        .action-button.delete {
+            background: #d73a49;
+            border-color: #d73a49;
+            color: white;
+        }
+
+        .action-button.delete:hover {
+            background: #b31d2b;
+            border-color: #b31d2b;
+        }
+
+        .action-button.undo {
+            background: #fd7e14;
+            border-color: #fd7e14;
+            color: white;
+        }
+
+        .action-button.undo:hover {
+            background: #e8690b;
+            border-color: #e8690b;
+        }
+
+
+        .canvas-container {
+            position: relative;
+            background: #2a2a2a;
+            border-radius: 4px;
+            padding: 12px;
+            border: 1px solid #444;
+            width: 80vw;
+            height: 75vh;
+            max-width: 1200px;
+            max-height: 800px;
+            min-width: 500px;
+            min-height: 400px;
+            overflow: auto;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Custom scrollbars to match theme */
+        .canvas-container::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        .canvas-container::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 6px;
+        }
+
+        .canvas-container::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 6px;
+            border: 2px solid #1a1a1a;
+        }
+
+        .canvas-container::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+
+        .canvas-container::-webkit-scrollbar-corner {
+            background: #1a1a1a;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            background: 
+                linear-gradient(45deg, #404040 25%, transparent 25%),
+                linear-gradient(-45deg, #404040 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #404040 75%),
+                linear-gradient(-45deg, transparent 75%, #404040 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+            background-color: #353535;
+            border-radius: 4px;
+            overflow: visible;
+        }
+
+        canvas {
+            display: block;
+            cursor: crosshair;
+            transition: opacity 0.2s ease;
+            border: 1px solid #888;
+            border-radius: 2px;
+        }
+
+        .preview-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .instructions {
+            color: white;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 0.8;
+            line-height: 1.6;
+            max-width: 600px;
+        }
+
+        .download-button {
+            background: linear-gradient(45deg, #10ac84, #00d2d3);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+            display: none;
+        }
+
+        .download-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .brush-controls {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.37);
+            display: none;
+        }
+
+        .brush-controls.active {
+            display: block;
+        }
+
+        .brush-button-group {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .brush-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 6px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            user-select: none;
+            flex: 1;
+            text-align: center;
+        }
+
+        .brush-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .brush-button.active {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border-color: #ff6b6b;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            top: 50px;
+            right: 15px;
+            display: flex;
+            gap: 5px;
+            z-index: 1000;
+            background: rgba(26, 26, 26, 0.9);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+
+        .zoom-button {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .zoom-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
+        }
+
+        .zoom-button[title="Zoom to 100%"] {
+            width: 40px;
+            font-size: 12px;
+            border-radius: 15px;
+        }
+
+        .zoom-level {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .canvas-container:active {
+            cursor: grabbing;
+        }
+
+        .canvas-container.eraser-mode {
+            cursor: default;
+        }
+
+        .canvas-container.eraser-mode:active {
+            cursor: default;
+        }
+
+        .no-image {
+            color: white;
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            opacity: 0.7;
+        }
+
+        .tolerance-control {
+            background: #2a2a2a;
+            border-radius: 4px;
+            padding: 10px;
+            border: 1px solid #444;
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .tolerance-control label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .tolerance-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        .tolerance-hint {
+            font-size: 10px;
+            color: #888;
+            font-style: italic;
+        }
+
+        .tolerance-control input[type="range"] {
+            width: 100%;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .main-layout {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .left-controls, .right-controls {
+                min-width: 300px;
+                max-width: 500px;
+            }
+            
+            .canvas-container {
+                max-width: 90vw;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .left-controls, .right-controls {
+                min-width: 250px;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+            }
+            
+            .control-section h3 {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <img src="backgroundremover.svg" alt="Background Remover" class="header-icon">
+            <div>
+                <h1>Background Remover</h1>
+                <p class="header-subtitle">Smart Background Removal Tool</p>
+            </div>
+        </div>
+        <p class="header-tagline">Remove backgrounds with precision edge detection</p>
+    </div>
+
+    <div class="main-layout">
+        <!-- Left Controls -->
+        <div class="left-controls">
+            <!-- File Upload -->
+            <div class="controls">
+                <div class="control-section">
+                    <h3>📁 Image</h3>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="imageInput" class="file-input" accept="image/*">
+                        <button class="file-button">Choose Image</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selection Controls -->
+            <div class="controls">
+                <div class="control-section">
+                    <h3>🎯 Selection</h3>
+                    <div class="control-group">
+                        <label for="algorithmSelector">Algorithm</label>
+                        <select id="algorithmSelector" class="algorithm-selector">
+                            <option value="rgb">RGB Distance (Alternate - Follows Colours)</option>
+                            <option value="lab" selected>LAB (Default - Best Edge Detection)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="previewMode">Preview Mode</label>
+                        <select id="previewMode" class="algorithm-selector">
+                            <option value="dynamic" selected>Dynamic (Live Preview)</option>
+                            <option value="static">Static (Set & Edit)</option>
+                        </select>
+                        <p style="font-size: 9px; opacity: 0.7; margin-top: 3px; line-height: 1.2;">
+                            Dynamic: Hover to preview, click to delete<br>
+                            Static: Click to set mask, edit, then delete
+                        </p>
+                    </div>
+                    <div class="control-group">
+                        <label for="edgeSensitivity">Edge Sensitivity: <span id="edgeSensitivityValue">200</span></label>
+                        <input type="range" id="edgeSensitivity" min="0" max="255" value="200">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Image Area -->
+        <div class="image-area">
+            <!-- Tolerance Control (above image for easy access) -->
+            <div class="tolerance-control">
+                <label for="toleranceSlider">
+                    <span class="tolerance-label">Tolerance: <span id="toleranceValue">25</span></span>
+                    <span class="tolerance-hint">🖱️ Use scroll wheel on image to adjust</span>
+                </label>
+                <input type="range" id="toleranceSlider" min="1" max="100" value="25">
+            </div>
+            
+            <!-- Zoom controls positioned outside and over the canvas container -->
+            <div class="zoom-controls">
+                <button id="zoomIn" class="zoom-button" title="Zoom In">+</button>
+                <div id="zoomLevel" class="zoom-level">100%</div>
+                <button id="zoomOut" class="zoom-button" title="Zoom Out">-</button>
+                <button id="zoom100" class="zoom-button" title="Zoom to 100%">1:1</button>
+                <button id="zoomFit" class="zoom-button" title="Fit to Window">⌂</button>
+            </div>
+            
+            <div class="canvas-container">
+                <div id="canvasWrapper" class="canvas-wrapper" style="display: none;">
+                    <canvas id="mainCanvas"></canvas>
+                    <canvas id="previewCanvas" class="preview-canvas"></canvas>
+                </div>
+                <div id="noImageText" class="no-image">
+                    Select an image to start editing
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Controls -->
+        <div class="right-controls">
+            <!-- Edge Quality Controls -->
+            <div class="controls">
+                <div class="control-section">
+                    <h3>✨ Edge Quality</h3>
+                    <div class="control-group">
+                        <label for="featherRadius">Edge Feather: <span id="featherRadiusValue">3</span>px</label>
+                        <input type="range" id="featherRadius" min="0" max="10" value="3">
+                    </div>
+                    <div class="control-group">
+                        <label for="smoothingPasses">Smoothing: <span id="smoothingPassesValue">2</span></label>
+                        <input type="range" id="smoothingPasses" min="0" max="5" value="2">
+                    </div>
+                    <div class="control-group">
+                        <label for="shrinkMask">Expand: <span id="shrinkMaskValue">2</span>px</label>
+                        <input type="range" id="shrinkMask" min="0" max="10" value="2">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Eraser Controls -->
+            <div id="brushControls" class="brush-controls">
+                <div class="control-section">
+                    <h3>🧽 Eraser Tool</h3>
+                    <p style="font-size: 10px; opacity: 0.8; margin-bottom: 8px;">Trim edges and remove debris</p>
+                    <div class="brush-button-group">
+                        <button id="eraserBrushBtn" class="brush-button active">🧽 Enable Eraser</button>
+                    </div>
+                    <div class="control-group">
+                        <label for="brushSize">Size: <span id="brushSizeValue">20</span>px</label>
+                        <input type="range" id="brushSize" min="5" max="100" value="20">
+                    </div>
+                    <div class="control-group">
+                        <label for="brushOpacity">Opacity: <span id="brushOpacityValue">100</span>%</label>
+                        <input type="range" id="brushOpacity" min="10" max="100" value="100">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Eraser Controls -->
+            <div id="dynamicEraserControls" class="brush-controls">
+                <div class="control-section">
+                    <h3>🧽 Eraser Tool</h3>
+                    <p style="font-size: 10px; opacity: 0.8; margin-bottom: 8px;">Trim edges and remove debris directly</p>
+                    <div class="brush-button-group">
+                        <button id="dynamicEraserBtn" class="brush-button">🧽 Enable Eraser</button>
+                    </div>
+                    <div class="control-group">
+                        <label for="dynamicBrushSize">Size: <span id="dynamicBrushSizeValue">20</span>px</label>
+                        <input type="range" id="dynamicBrushSize" min="5" max="100" value="20">
+                    </div>
+                    <div class="control-group">
+                        <label for="dynamicBrushOpacity">Opacity: <span id="dynamicBrushOpacityValue">100</span>%</label>
+                        <input type="range" id="dynamicBrushOpacity" min="10" max="100" value="100">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="controls">
+                <div class="control-section">
+                    <h3>⚡ Actions</h3>
+                    <div class="action-buttons">
+                        <button id="undoButton" class="action-button undo" style="display: none;">↶ Undo</button>
+                        <button id="deleteButton" class="action-button delete" style="display: none;">🗑️ Remove Selected Areas</button>
+                        <button id="downloadButton" class="action-button" style="display: none;">⬇️ Download Result</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Advanced Magic Wand Image Editor with Edge Smoothing
+         * Features: LAB color space, edge detection, morphological operations, alpha feathering
+         */
+        class MagicWandEditor {
+            constructor() {
+                this.initializeElements();
+                this.initializeProperties();
+                this.setupEventListeners();
+            }
+
+            // ====== INITIALIZATION METHODS ======
+            initializeElements() {
+                this.mainCanvas = document.getElementById('mainCanvas');
+                this.previewCanvas = document.getElementById('previewCanvas');
+                this.mainCtx = this.mainCanvas.getContext('2d');
+                this.previewCtx = this.previewCanvas.getContext('2d');
+                this.canvasWrapper = document.getElementById('canvasWrapper');
+                this.noImageText = document.getElementById('noImageText');
+                this.downloadButton = document.getElementById('downloadButton');
+                this.undoButton = document.getElementById('undoButton');
+                this.deleteButton = document.getElementById('deleteButton');
+                
+                // Control elements
+                this.toleranceValue = document.getElementById('toleranceValue');
+                this.toleranceSlider = document.getElementById('toleranceSlider');
+                this.algorithmSelector = document.getElementById('algorithmSelector');
+                this.previewModeSelector = document.getElementById('previewMode');
+                this.edgeSensitivityInput = document.getElementById('edgeSensitivity');
+                this.edgeSensitivityValue = document.getElementById('edgeSensitivityValue');
+                this.featherRadiusInput = document.getElementById('featherRadius');
+                this.featherRadiusValue = document.getElementById('featherRadiusValue');
+                this.smoothingPassesInput = document.getElementById('smoothingPasses');
+                this.smoothingPassesValue = document.getElementById('smoothingPassesValue');
+                this.shrinkMaskInput = document.getElementById('shrinkMask');
+                this.shrinkMaskValue = document.getElementById('shrinkMaskValue');
+                
+                // Brush control elements
+                this.brushControls = document.getElementById('brushControls');
+                this.eraserBrushBtn = document.getElementById('eraserBrushBtn');
+                this.brushSizeInput = document.getElementById('brushSize');
+                this.brushSizeValue = document.getElementById('brushSizeValue');
+                this.brushOpacityInput = document.getElementById('brushOpacity');
+                this.brushOpacityValue = document.getElementById('brushOpacityValue');
+                
+                // Dynamic eraser control elements
+                this.dynamicEraserControls = document.getElementById('dynamicEraserControls');
+                this.dynamicEraserBtn = document.getElementById('dynamicEraserBtn');
+                this.dynamicBrushSizeInput = document.getElementById('dynamicBrushSize');
+                this.dynamicBrushSizeValue = document.getElementById('dynamicBrushSizeValue');
+                this.dynamicBrushOpacityInput = document.getElementById('dynamicBrushOpacity');
+                this.dynamicBrushOpacityValue = document.getElementById('dynamicBrushOpacityValue');
+                
+                // Zoom control elements
+                this.canvasContainer = document.querySelector('.canvas-container');
+                this.zoomInBtn = document.getElementById('zoomIn');
+                this.zoomOutBtn = document.getElementById('zoomOut');
+                this.zoom100Btn = document.getElementById('zoom100');
+                this.zoomFitBtn = document.getElementById('zoomFit');
+                this.zoomLevelDisplay = document.getElementById('zoomLevel');
+            }
+
+            initializeProperties() {
+                // Core properties
+                this.tolerance = 25; // More precise default
+                this.algorithm = 'lab'; // Default to LAB for better perceptual accuracy
+                this.previewMode = 'dynamic'; // Default to dynamic mode
+                this.edgeSensitivity = parseInt(this.edgeSensitivityInput.value, 10);
+                this.featherRadius = parseInt(this.featherRadiusInput.value, 10);
+                this.smoothingPasses = parseInt(this.smoothingPassesInput.value, 10);
+                this.shrinkMask = parseInt(this.shrinkMaskInput.value, 10);
+                
+                // Image data and undo system
+                this.imageData = null;
+                this.originalImageData = null;
+                this.undoStack = [];
+                this.edgeMap = null;
+                
+                // Static mask preview properties
+                this.staticMaskData = null;
+                this.staticMaskPosition = null;
+                this.isStaticMaskSet = false;
+                this.additionalMaskPositions = [];
+                
+                // Interaction state
+                this.isMouseInside = false;
+                this.lastMousePos = null;
+                this.isShiftPressed = false;
+                
+                // Performance optimization
+                this.updateTimeout = null;
+                this.mouseMoveTimeout = null;
+                this.toleranceUpdateTimeout = null;
+                this.edgeSensitivityUpdateTimeout = null;
+                this.isUpdating = false;
+                
+                // Fast mode for rapid tolerance changes
+                this.fastMode = false;
+                this.fastModeTimeout = null;
+                
+                // Brush tool properties
+                this.brushMode = 'erase'; // Only erase mode now
+                this.brushSize = 20;
+                this.brushOpacity = 100;
+                this.isDrawing = false;
+                this.lastDrawPos = null;
+                this.brushCanvas = null;
+                this.brushCtx = null;
+                this.staticEraserActive = false;
+                
+                // Dynamic eraser properties
+                this.dynamicEraserActive = false;
+                this.dynamicBrushSize = 20;
+                this.dynamicBrushOpacity = 1.0;
+                
+                // Zoom properties
+                this.zoomLevel = 1;
+                this.panX = 0;
+                this.panY = 0;
+                this.lastPanX = 0;
+                this.lastPanY = 0;
+                this.isDragging = false;
+                this.isPanning = false;
+                this.panStartX = 0;
+                this.panStartY = 0;
+            }
+
+            setupEventListeners() {
+                // File input
+                document.getElementById('imageInput').addEventListener('change', (e) => this.loadImage(e.target.files[0]));
+                
+                // Canvas interactions
+                this.mainCanvas.addEventListener('mousemove', (e) => this.handleMouseMoveForDrawing(e));
+                this.mainCanvas.addEventListener('mouseenter', () => { this.isMouseInside = true; });
+                this.mainCanvas.addEventListener('mouseleave', () => this.handleMouseLeave());
+                this.mainCanvas.addEventListener('wheel', (e) => this.adjustTolerance(e));
+                this.mainCanvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+                this.mainCanvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+                this.mainCanvas.addEventListener('mouseout', (e) => this.handleMouseUp(e));
+                this.mainCanvas.addEventListener('contextmenu', (e) => e.preventDefault()); // Prevent right-click menu
+                
+                // Global mouse events for right-click panning
+                document.addEventListener('mousemove', (e) => this.handleGlobalMouseMove(e));
+                document.addEventListener('mouseup', (e) => this.handleGlobalMouseUp(e));
+                
+                // Control changes
+                this.toleranceSlider.addEventListener('input', (e) => this.handleToleranceSliderChange(e));
+                this.algorithmSelector.addEventListener('change', (e) => this.handleAlgorithmChange(e));
+                this.previewModeSelector.addEventListener('change', (e) => this.handlePreviewModeChange(e));
+                this.edgeSensitivityInput.addEventListener('input', (e) => this.handleEdgeSensitivityChange(e));
+                this.featherRadiusInput.addEventListener('input', (e) => this.handleFeatherRadiusChange(e));
+                this.smoothingPassesInput.addEventListener('input', (e) => this.handleSmoothingPassesChange(e));
+                this.shrinkMaskInput.addEventListener('input', (e) => this.handleShrinkMaskChange(e));
+                
+                // Download and action buttons
+                this.downloadButton.addEventListener('click', () => this.downloadImage());
+                this.undoButton.addEventListener('click', () => this.undoLastAction());
+                this.deleteButton.addEventListener('click', () => this.deleteStaticMask());
+                
+                // Brush controls
+                this.eraserBrushBtn.addEventListener('click', () => this.toggleStaticEraser());
+                this.brushSizeInput.addEventListener('input', (e) => this.handleBrushSizeChange(e));
+                this.brushOpacityInput.addEventListener('input', (e) => this.handleBrushOpacityChange(e));
+                
+                // Dynamic eraser controls
+                this.dynamicEraserBtn.addEventListener('click', () => this.toggleDynamicEraser());
+                this.dynamicBrushSizeInput.addEventListener('input', (e) => this.handleDynamicBrushSizeChange(e));
+                this.dynamicBrushOpacityInput.addEventListener('input', (e) => this.handleDynamicBrushOpacityChange(e));
+                
+                // Zoom controls
+                this.zoomInBtn.addEventListener('click', () => this.zoomIn());
+                this.zoomOutBtn.addEventListener('click', () => this.zoomOut());
+                this.zoom100Btn.addEventListener('click', () => this.zoomTo100());
+                this.zoomFitBtn.addEventListener('click', () => this.zoomToFit());
+                
+                // Pan controls
+                this.canvasContainer.addEventListener('mousedown', (e) => this.handlePanStart(e));
+                this.canvasContainer.addEventListener('mousemove', (e) => this.handlePanMove(e));
+                this.canvasContainer.addEventListener('mouseup', () => this.handlePanEnd());
+                this.canvasContainer.addEventListener('mouseleave', () => this.handlePanEnd());
+                
+                // Keyboard controls
+                document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+                document.addEventListener('keyup', (e) => this.handleKeyUp(e));
+            }
+
+            // ====== IMAGE LOADING AND SETUP ======
+            loadImage(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.setupCanvas(img);
+                        this.noImageText.style.display = 'none';
+                        this.canvasWrapper.style.display = 'inline-block';
+                        this.downloadButton.style.display = 'inline-block';
+                        this.undoButton.style.display = 'inline-block';
+                        
+                        // Show appropriate controls based on mode
+                        if (this.previewMode === 'static') {
+                            this.brushControls.classList.add('active');
+                            this.dynamicEraserControls.style.display = 'none';
+                        } else {
+                            this.dynamicEraserControls.style.display = 'block';
+                        }
+                        
+                        // Initialize undo system
+                        this.saveToUndoStack();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            setupCanvas(img) {
+                // Store original dimensions for full-quality processing
+                this.originalWidth = img.width;
+                this.originalHeight = img.height;
+                
+                // Set canvas size to original dimensions for full quality
+                this.mainCanvas.width = this.previewCanvas.width = img.width;
+                this.mainCanvas.height = this.previewCanvas.height = img.height;
+                
+                // Calculate zoom to fit viewport (with some padding)
+                const containerWidth = this.canvasContainer.clientWidth - 40; // Account for padding
+                const containerHeight = this.canvasContainer.clientHeight - 40;
+                const scaleX = containerWidth / img.width;
+                const scaleY = containerHeight / img.height;
+                const fitScale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+                
+                // Set initial zoom to fit viewport
+                this.zoomLevel = fitScale;
+                
+                // Apply initial scaling
+                this.applyTransform();
+
+                // Draw image at full resolution
+                this.mainCtx.drawImage(img, 0, 0, img.width, img.height);
+                this.imageData = this.mainCtx.getImageData(0, 0, img.width, img.height);
+                this.originalImageData = this.mainCtx.getImageData(0, 0, img.width, img.height);
+                
+                this.createEdgeMap();
+                
+                // Create brush canvas for advanced editing
+                this.createBrushCanvas();
+                
+                // Update zoom display to show 100%
+                this.updateZoomDisplay();
+            }
+
+            // ====== EDGE DETECTION ======
+            createEdgeMap() {
+                const width = this.originalImageData.width;
+                const height = this.originalImageData.height;
+                const grayData = new Uint8ClampedArray(width * height);
+                const data = this.originalImageData.data;
+
+                // Convert to grayscale using improved luminosity method
+                for (let i = 0; i < data.length; i += 4) {
+                    const luminosity = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                    grayData[i / 4] = luminosity;
+                }
+
+                this.edgeMap = new Uint8ClampedArray(width * height);
+                
+                // Enhanced Sobel operators for better edge detection
+                const sobelX = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]];
+                const sobelY = [[-1, -2, -1], [0, 0, 0], [1, 2, 1]];
+
+                // Apply Sobel operator for edge detection with enhanced precision
+                for (let y = 1; y < height - 1; y++) {
+                    for (let x = 1; x < width - 1; x++) {
+                        let gx = 0, gy = 0;
+                        for (let ky = -1; ky <= 1; ky++) {
+                            for (let kx = -1; kx <= 1; kx++) {
+                                const pixelVal = grayData[(y + ky) * width + (x + kx)];
+                                gx += pixelVal * sobelX[ky + 1][kx + 1];
+                                gy += pixelVal * sobelY[ky + 1][kx + 1];
+                            }
+                        }
+                        const magnitude = Math.sqrt(gx * gx + gy * gy);
+                        
+                        // Enhanced edge detection with non-maximum suppression
+                        const angle = Math.atan2(gy, gx) * 180 / Math.PI;
+                        const normalizedAngle = ((angle + 180) % 180);
+                        
+                        let neighbor1 = 0, neighbor2 = 0;
+                        if (normalizedAngle < 22.5 || normalizedAngle >= 157.5) {
+                            // Horizontal edge
+                            neighbor1 = grayData[y * width + (x - 1)];
+                            neighbor2 = grayData[y * width + (x + 1)];
+                        } else if (normalizedAngle < 67.5) {
+                            // Diagonal edge (45 degrees)
+                            neighbor1 = grayData[(y - 1) * width + (x + 1)];
+                            neighbor2 = grayData[(y + 1) * width + (x - 1)];
+                        } else if (normalizedAngle < 112.5) {
+                            // Vertical edge
+                            neighbor1 = grayData[(y - 1) * width + x];
+                            neighbor2 = grayData[(y + 1) * width + x];
+                        } else {
+                            // Diagonal edge (135 degrees)
+                            neighbor1 = grayData[(y - 1) * width + (x - 1)];
+                            neighbor2 = grayData[(y + 1) * width + (x + 1)];
+                        }
+                        
+                        // Non-maximum suppression for cleaner edges
+                        const currentPixel = grayData[y * width + x];
+                        if (currentPixel >= neighbor1 && currentPixel >= neighbor2) {
+                            this.edgeMap[y * width + x] = Math.min(255, magnitude);
+                        } else {
+                            this.edgeMap[y * width + x] = magnitude * 0.5; // Suppress non-maximum
+                        }
+                    }
+                }
+                
+                // Apply Gaussian blur to edge map for smoother edge transitions
+                this.edgeMap = this.gaussianBlur(this.edgeMap, width, height, 0.8);
+            }
+
+            // Gaussian blur for smoother edge maps
+            gaussianBlur(data, width, height, sigma) {
+                const kernel = this.generateGaussianKernel(sigma);
+                const result = new Uint8ClampedArray(width * height);
+                const kernelSize = kernel.length;
+                const radius = Math.floor(kernelSize / 2);
+                
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let sum = 0;
+                        let weightSum = 0;
+                        
+                        for (let ky = -radius; ky <= radius; ky++) {
+                            for (let kx = -radius; kx <= radius; kx++) {
+                                const ny = Math.max(0, Math.min(height - 1, y + ky));
+                                const nx = Math.max(0, Math.min(width - 1, x + kx));
+                                const weight = kernel[ky + radius] * kernel[kx + radius];
+                                sum += data[ny * width + nx] * weight;
+                                weightSum += weight;
+                            }
+                        }
+                        
+                        result[y * width + x] = sum / weightSum;
+                    }
+                }
+                
+                return result;
+            }
+
+            generateGaussianKernel(sigma) {
+                const size = Math.ceil(sigma * 3) * 2 + 1;
+                const kernel = new Array(size);
+                const center = Math.floor(size / 2);
+                let sum = 0;
+                
+                for (let i = 0; i < size; i++) {
+                    const x = i - center;
+                    kernel[i] = Math.exp(-(x * x) / (2 * sigma * sigma));
+                    sum += kernel[i];
+                }
+                
+                // Normalize kernel
+                for (let i = 0; i < size; i++) {
+                    kernel[i] /= sum;
+                }
+                
+                return kernel;
+            }
+
+            // ====== BRUSH CANVAS SETUP ======
+            createBrushCanvas() {
+                // Create invisible canvas for brush operations
+                this.brushCanvas = document.createElement('canvas');
+                this.brushCanvas.width = this.mainCanvas.width;
+                this.brushCanvas.height = this.mainCanvas.height;
+                this.brushCtx = this.brushCanvas.getContext('2d');
+                this.brushCtx.imageSmoothingEnabled = true;
+            }
+
+            // ====== COLOR SPACE CONVERSIONS ======
+            rgbToLab(r, g, b) {
+                // Convert RGB to LAB color space for perceptual accuracy
+                r /= 255; g /= 255; b /= 255;
+                r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+                g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+                b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+                
+                let x = r * 0.4124 + g * 0.3576 + b * 0.1805;
+                let y = r * 0.2126 + g * 0.7152 + b * 0.0722;
+                let z = r * 0.0193 + g * 0.1192 + b * 0.9505;
+                
+                x /= 0.95047; y /= 1.00000; z /= 1.08883;
+                x = x > 0.008856 ? Math.pow(x, 1/3) : (7.787 * x + 16/116);
+                y = y > 0.008856 ? Math.pow(y, 1/3) : (7.787 * y + 16/116);
+                z = z > 0.008856 ? Math.pow(z, 1/3) : (7.787 * z + 16/116);
+                
+                return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
+            }
+
+            deltaE76(lab1, lab2) {
+                // Calculate Delta E color difference in LAB space
+                const [L1, a1, b1] = lab1;
+                const [L2, a2, b2] = lab2;
+                return Math.sqrt(Math.pow(L1 - L2, 2) + Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2));
+            }
+
+            calculateColorDistance(r1, g1, b1, r2, g2, b2) {
+                if (this.algorithm === 'lab') {
+                    const lab1 = this.rgbToLab(r1, g1, b1);
+                    const lab2 = this.rgbToLab(r2, g2, b2);
+                    return this.deltaE76(lab1, lab2);
+                }
+                return Math.sqrt(Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2));
+            }
+
+            // ====== MORPHOLOGICAL OPERATIONS ======
+            createMorphKernel(radius) {
+                const size = radius * 2 + 1;
+                const kernel = new Array(size * size);
+                const center = radius;
+                
+                for (let y = 0; y < size; y++) {
+                    for (let x = 0; x < size; x++) {
+                        const distance = Math.sqrt(Math.pow(x - center, 2) + Math.pow(y - center, 2));
+                        kernel[y * size + x] = distance <= radius ? 1 : 0;
+                    }
+                }
+                return { kernel, size };
+            }
+
+            morphologicalOperation(mask, width, height, operation, radius) {
+                if (radius === 0) return mask;
+                
+                const { kernel, size } = this.createMorphKernel(radius);
+                const result = new Uint8Array(width * height);
+                const halfSize = Math.floor(size / 2);
+                
+                for (let y = halfSize; y < height - halfSize; y++) {
+                    for (let x = halfSize; x < width - halfSize; x++) {
+                        let value = operation === 'erode' ? 1 : 0;
+                        
+                        for (let ky = 0; ky < size; ky++) {
+                            for (let kx = 0; kx < size; kx++) {
+                                if (kernel[ky * size + kx]) {
+                                    const pixelIndex = (y + ky - halfSize) * width + (x + kx - halfSize);
+                                    if (operation === 'erode') {
+                                        value = Math.min(value, mask[pixelIndex]);
+                                    } else {
+                                        value = Math.max(value, mask[pixelIndex]);
+                                    }
+                                }
+                            }
+                        }
+                        result[y * width + x] = value;
+                    }
+                }
+                
+                // Copy borders to prevent edge artifacts
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        if (y < halfSize || y >= height - halfSize || x < halfSize || x >= width - halfSize) {
+                            result[y * width + x] = mask[y * width + x];
+                        }
+                    }
+                }
+                
+                return result;
+            }
+
+            // Enhanced morphological processing with opening and closing operations
+            advancedMorphologicalSmoothing(mask, width, height, passes) {
+                let result = mask;
+                
+                for (let i = 0; i < passes; i++) {
+                    // Opening operation (erosion followed by dilation) - removes noise
+                    result = this.morphologicalOperation(result, width, height, 'erode', 1);
+                    result = this.morphologicalOperation(result, width, height, 'dilate', 1);
+                    
+                    // Closing operation (dilation followed by erosion) - fills gaps
+                    result = this.morphologicalOperation(result, width, height, 'dilate', 1);
+                    result = this.morphologicalOperation(result, width, height, 'erode', 1);
+                }
+                
+                return result;
+            }
+
+            // ====== EDGE FEATHERING ======
+            createFeatheredMask(mask, width, height, featherRadius) {
+                if (featherRadius === 0) return mask;
+                
+                const result = new Float32Array(width * height);
+                
+                // Enhanced feathering with Gaussian-like falloff
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const index = y * width + x;
+                        if (mask[index]) {
+                            // Find distance to nearest edge with subpixel precision
+                            let minDistance = featherRadius + 1;
+                            
+                            // Use larger sampling area for better edge detection
+                            const sampleRadius = Math.max(featherRadius, 3);
+                            for (let dy = -sampleRadius; dy <= sampleRadius; dy++) {
+                                for (let dx = -sampleRadius; dx <= sampleRadius; dx++) {
+                                    const nx = x + dx;
+                                    const ny = y + dy;
+                                    if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                        const neighborIndex = ny * width + nx;
+                                        if (!mask[neighborIndex]) {
+                                            const distance = Math.sqrt(dx * dx + dy * dy);
+                                            minDistance = Math.min(minDistance, distance);
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Create smooth Gaussian-like falloff for better edge quality
+                            const normalizedDistance = Math.min(1, minDistance / featherRadius);
+                            const alpha = Math.pow(normalizedDistance, 0.7); // Slightly curved falloff
+                            result[index] = Math.max(0, Math.min(1, alpha));
+                        }
+                    }
+                }
+                
+                // Apply additional smoothing pass for ultra-smooth edges
+                return this.smoothMask(result, width, height);
+            }
+
+            // Enhanced mask smoothing for professional results
+            smoothMask(mask, width, height) {
+                const result = new Float32Array(width * height);
+                const kernel = [
+                    0.0625, 0.125, 0.0625,
+                    0.125,  0.25,  0.125,
+                    0.0625, 0.125, 0.0625
+                ];
+                
+                for (let y = 1; y < height - 1; y++) {
+                    for (let x = 1; x < width - 1; x++) {
+                        let sum = 0;
+                        let kernelIndex = 0;
+                        
+                        for (let ky = -1; ky <= 1; ky++) {
+                            for (let kx = -1; kx <= 1; kx++) {
+                                const neighborIndex = (y + ky) * width + (x + kx);
+                                sum += mask[neighborIndex] * kernel[kernelIndex];
+                                kernelIndex++;
+                            }
+                        }
+                        
+                        result[y * width + x] = sum;
+                    }
+                }
+                
+                // Copy borders
+                for (let y = 0; y < height; y++) {
+                    result[y * width] = mask[y * width];
+                    result[y * width + width - 1] = mask[y * width + width - 1];
+                }
+                for (let x = 0; x < width; x++) {
+                    result[x] = mask[x];
+                    result[(height - 1) * width + x] = mask[(height - 1) * width + x];
+                }
+                
+                return result;
+            }
+
+            // ====== UNDO SYSTEM ======
+            saveToUndoStack() {
+                // Save current state to undo stack (max 10 states)
+                const currentState = this.mainCtx.getImageData(0, 0, this.mainCanvas.width, this.mainCanvas.height);
+                this.undoStack.push(currentState);
+                
+                // Limit undo stack size
+                if (this.undoStack.length > 10) {
+                    this.undoStack.shift();
+                }
+                
+                // Enable undo button
+                this.undoButton.style.opacity = '1';
+                this.undoButton.style.pointerEvents = 'auto';
+            }
+
+            undoLastAction() {
+                if (this.undoStack.length > 1) {
+                    // Remove current state
+                    this.undoStack.pop();
+                    
+                    // Restore previous state
+                    const previousState = this.undoStack[this.undoStack.length - 1];
+                    this.mainCtx.putImageData(previousState, 0, 0);
+                    this.imageData = this.mainCtx.getImageData(0, 0, this.mainCanvas.width, this.mainCanvas.height);
+                    
+                    // Clear any static mask
+                    this.clearStaticMask();
+                }
+                
+                // Disable undo button if no more states
+                if (this.undoStack.length <= 1) {
+                    this.undoButton.style.opacity = '0.5';
+                    this.undoButton.style.pointerEvents = 'none';
+                }
+            }
+
+            // ====== STATIC MASK PREVIEW ======
+            setStaticMask(pos, additive = false) {
+                if (!additive || !this.isStaticMaskSet) {
+                    // First click or non-additive - set new mask
+                    this.staticMaskPosition = pos;
+                    this.additionalMaskPositions = [];
+                } else {
+                    // Shift-click - add to existing mask
+                    this.additionalMaskPositions.push(pos);
+                }
+                
+                this.updateStaticMask();
+                this.isStaticMaskSet = true;
+                this.deleteButton.style.display = 'inline-block';
+                this.updateCursor();
+            }
+
+            updateStaticMask() {
+                if (!this.staticMaskPosition) return;
+                
+                const width = this.imageData.width;
+                const height = this.imageData.height;
+                
+                // Start with the main mask
+                const rawMask = this.floodFill(this.staticMaskPosition.x, this.staticMaskPosition.y, this.tolerance, this.edgeSensitivity);
+                let combinedMask = rawMask.slice(); // Copy the array
+                
+                // Add additional mask areas
+                if (this.additionalMaskPositions && this.additionalMaskPositions.length > 0) {
+                    for (const pos of this.additionalMaskPositions) {
+                        const additionalMask = this.floodFill(pos.x, pos.y, this.tolerance, this.edgeSensitivity);
+                        // Combine masks (union operation)
+                        for (let i = 0; i < combinedMask.length; i++) {
+                            combinedMask[i] = Math.max(combinedMask[i], additionalMask[i]);
+                        }
+                    }
+                }
+                
+                // Apply enhanced morphological smoothing
+                let processedMask = this.advancedMorphologicalSmoothing(combinedMask, width, height, this.smoothingPasses);
+                
+                // Apply mask expansion
+                if (this.shrinkMask > 0) {
+                    processedMask = this.expandMaskOperation(processedMask, width, height, this.shrinkMask);
+                }
+                
+                // Apply enhanced edge feathering
+                this.staticMaskData = this.createFeatheredMask(processedMask, width, height, this.featherRadius);
+                
+                // Show preview
+                this.showStaticMaskPreview();
+            }
+
+            showStaticMaskPreview() {
+                if (!this.staticMaskData) return;
+                
+                this.clearPreview();
+                const previewData = this.mainCtx.getImageData(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+                const data = previewData.data;
+                
+                for (let i = 0; i < this.staticMaskData.length; i++) {
+                    const alpha = this.staticMaskData[i];
+                    if (alpha > 0) {
+                        const pixelIndex = i * 4;
+                        // Apply blue overlay for static mask
+                        const overlayStrength = alpha * 0.7;
+                        data[pixelIndex] = data[pixelIndex] * (1 - overlayStrength);
+                        data[pixelIndex + 1] = data[pixelIndex + 1] * (1 - overlayStrength);
+                        data[pixelIndex + 2] = (data[pixelIndex + 2] * (1 - overlayStrength)) + (255 * overlayStrength);
+                        data[pixelIndex + 3] = Math.max(data[pixelIndex + 3], alpha * 255);
+                    }
+                }
+                this.previewCtx.putImageData(previewData, 0, 0);
+            }
+
+            clearStaticMask() {
+                this.staticMaskData = null;
+                this.staticMaskPosition = null;
+                this.isStaticMaskSet = false;
+                this.deleteButton.style.display = 'none';
+                this.clearPreview();
+                this.updateCursor();
+            }
+
+            deleteStaticMask() {
+                if (!this.staticMaskData) return;
+                
+                // Save current state to undo stack
+                this.saveToUndoStack();
+                
+                // Apply the mask
+                const data = this.imageData.data;
+                for (let i = 0; i < this.staticMaskData.length; i++) {
+                    const alpha = this.staticMaskData[i];
+                    if (alpha > 0) {
+                        const pixelIndex = i * 4;
+                        data[pixelIndex + 3] = Math.max(0, data[pixelIndex + 3] * (1 - alpha));
+                    }
+                }
+                
+                this.mainCtx.putImageData(this.imageData, 0, 0);
+                this.clearStaticMask();
+            }
+            expandMaskOperation(mask, width, height, expandPixels) {
+                if (expandPixels === 0) return mask;
+                
+                // Apply multiple dilation operations to expand the mask
+                let result = mask;
+                for (let i = 0; i < expandPixels; i++) {
+                    result = this.morphologicalOperation(result, width, height, 'dilate', 1);
+                }
+                return result;
+            }
+
+            // ====== FLOOD FILL WITH EDGE DETECTION ======
+            floodFill(startX, startY, tolerance, edgeThreshold) {
+                const width = this.imageData.width;
+                const height = this.imageData.height;
+                const data = this.imageData.data;
+                const visited = new Uint8Array(width * height);
+                const result = new Uint8Array(width * height);
+                
+                const startIndex = (startY * width + startX) * 4;
+                if (data[startIndex + 3] === 0) return result;
+
+                const startR = data[startIndex];
+                const startG = data[startIndex + 1];
+                const startB = data[startIndex + 2];
+                
+                const stack = [[startX, startY]];
+                
+                while (stack.length > 0) {
+                    const [x, y] = stack.pop();
+                    
+                    if (x < 0 || x >= width || y < 0 || y >= height) continue;
+                    
+                    const index = y * width + x;
+                    if (visited[index]) continue;
+                    
+                    const pixelIndex = index * 4;
+                    if (data[pixelIndex + 3] === 0) continue;
+
+                    // Check edge sensitivity
+                    if (this.edgeMap[index] > edgeThreshold) {
+                        continue;
+                    }
+                    
+                    const r = data[pixelIndex];
+                    const g = data[pixelIndex + 1];
+                    const b = data[pixelIndex + 2];
+                    
+                    const colorDiff = this.calculateColorDistance(r, g, b, startR, startG, startB);
+                    
+                    if (colorDiff <= tolerance) {
+                        visited[index] = 1;
+                        result[index] = 1;
+                        
+                        // 8-way connectivity for smoother selections
+                        stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+                        stack.push([x + 1, y + 1], [x - 1, y - 1], [x + 1, y - 1], [x - 1, y + 1]);
+                    }
+                }
+                
+                return result;
+            }
+
+            // ====== MOUSE INTERACTIONS ======
+            getMousePos(e) {
+                const rect = this.mainCanvas.getBoundingClientRect();
+                // Convert from display coordinates to actual canvas coordinates
+                const scaleX = this.mainCanvas.width / rect.width;
+                const scaleY = this.mainCanvas.height / rect.height;
+                
+                return {
+                    x: Math.floor((e.clientX - rect.left) * scaleX),
+                    y: Math.floor((e.clientY - rect.top) * scaleY)
+                };
+            }
+
+            getDisplayMousePos(e) {
+                const rect = this.mainCanvas.getBoundingClientRect();
+                return {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                };
+            }
+
+            handleMouseMove(e) {
+                if (!this.imageData) return;
+                this.lastMousePos = this.getMousePos(e);
+                
+                // Only show dynamic preview in dynamic mode with throttling (and not while drawing or eraser active)
+                if (this.previewMode === 'dynamic' && !this.isStaticMaskSet && !this.isDrawing && !this.dynamicEraserActive) {
+                    // Clear any existing timeout
+                    clearTimeout(this.mouseMoveTimeout);
+                    
+                    // Set new timeout for smoother performance - increased delay for better performance
+                    this.mouseMoveTimeout = setTimeout(() => {
+                        if (this.lastMousePos && !this.isDrawing && !this.dynamicEraserActive) {
+                            this.showPreviewAtPos(this.lastMousePos);
+                        }
+                    }, 100); // Increased from 16ms to 100ms for much better performance
+                }
+            }
+
+            handleMouseLeave() {
+                this.isMouseInside = false;
+                this.lastMousePos = null;
+                
+                // Clear any pending mouse move updates
+                clearTimeout(this.mouseMoveTimeout);
+                
+                // Only clear preview in dynamic mode (and not when eraser is active since preview is already off)
+                if (this.previewMode === 'dynamic' && !this.dynamicEraserActive) {
+                    this.clearPreview();
+                }
+            }
+
+            showPreviewAtPos(pos) {
+                const rawMask = this.floodFill(pos.x, pos.y, this.tolerance, this.edgeSensitivity);
+                const width = this.imageData.width;
+                const height = this.imageData.height;
+                
+                let processedMask;
+                
+                if (this.fastMode) {
+                    // Fast mode: Skip heavy processing for quick tolerance changes
+                    processedMask = rawMask; // Use raw mask without expensive smoothing
+                } else {
+                    // Normal mode: Apply full processing
+                    processedMask = this.advancedMorphologicalSmoothing(rawMask, width, height, this.smoothingPasses);
+                    
+                    // Apply mask expansion to include more background/halo areas
+                    if (this.shrinkMask > 0) {
+                        processedMask = this.expandMaskOperation(processedMask, width, height, this.shrinkMask);
+                    }
+                }
+                
+                // Apply enhanced edge feathering (lighter in fast mode)
+                const featherRadius = this.fastMode ? Math.min(this.featherRadius, 1) : this.featherRadius;
+                const featheredMask = this.createFeatheredMask(processedMask, width, height, featherRadius);
+                
+                this.clearPreview();
+                const previewData = this.mainCtx.getImageData(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+                const data = previewData.data;
+                
+                for (let i = 0; i < featheredMask.length; i++) {
+                    const alpha = featheredMask[i];
+                    if (alpha > 0) {
+                        const pixelIndex = i * 4;
+                        // Apply smooth overlay based on feathered alpha
+                        const overlayStrength = alpha * 0.7;
+                        data[pixelIndex] = (data[pixelIndex] * (1 - overlayStrength)) + (255 * overlayStrength);
+                        data[pixelIndex + 1] = data[pixelIndex + 1] * (1 - overlayStrength);
+                        data[pixelIndex + 2] = data[pixelIndex + 2] * (1 - overlayStrength);
+                        data[pixelIndex + 3] = Math.max(data[pixelIndex + 3], alpha * 255);
+                    }
+                }
+                this.previewCtx.putImageData(previewData, 0, 0);
+            }
+
+            clearPreview() {
+                this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+            }
+
+            // ====== CONTROL HANDLERS ======
+            
+            // Throttled update system for better performance
+            throttledPreviewUpdate() {
+                if (this.isUpdating) return;
+                
+                this.isUpdating = true;
+                clearTimeout(this.updateTimeout);
+                
+                this.updateTimeout = setTimeout(() => {
+                    // Update preview based on current mode
+                    if (this.previewMode === 'dynamic' && this.isMouseInside && this.lastMousePos) {
+                        this.showPreviewAtPos(this.lastMousePos);
+                    } else if (this.previewMode === 'static' && this.isStaticMaskSet) {
+                        this.updateStaticMask();
+                    }
+                    this.isUpdating = false;
+                }, 150); // Increased to 150ms for better performance with tolerance changes
+            }
+
+            handleToleranceSliderChange(e) {
+                // Update display value immediately for responsive UI
+                this.tolerance = parseInt(e.target.value, 10);
+                this.toleranceValue.textContent = this.tolerance;
+                
+                // Enable fast mode during rapid tolerance changes
+                this.fastMode = true;
+                clearTimeout(this.fastModeTimeout);
+                this.fastModeTimeout = setTimeout(() => {
+                    this.fastMode = false;
+                }, 500); // Stay in fast mode for 500ms after last change
+                
+                // Debounce the actual preview update for better performance
+                clearTimeout(this.toleranceUpdateTimeout);
+                this.toleranceUpdateTimeout = setTimeout(() => {
+                    this.throttledPreviewUpdate();
+                }, 200); // Increased debounce for better performance
+            }
+
+            adjustTolerance(e) {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent event from bubbling up to container
+                
+                // If any eraser tool is active, adjust brush size instead of tolerance
+                if (this.dynamicEraserActive || this.staticEraserActive) {
+                    this.adjustEraserSize(e);
+                    return;
+                }
+                
+                // Normal tolerance adjustment for masking operations
+                const newTolerance = Math.max(1, Math.min(100, this.tolerance + (e.deltaY > 0 ? -1 : 1)));
+                
+                // Update both tolerance and slider immediately for responsive UI
+                this.tolerance = newTolerance;
+                this.toleranceValue.textContent = this.tolerance;
+                this.toleranceSlider.value = this.tolerance;
+                
+                // Enable fast mode during rapid scroll wheel changes
+                this.fastMode = true;
+                clearTimeout(this.fastModeTimeout);
+                this.fastModeTimeout = setTimeout(() => {
+                    this.fastMode = false;
+                }, 300); // Stay in fast mode for 300ms after last scroll
+                
+                // Debounce the preview update for better performance during rapid scrolling
+                clearTimeout(this.toleranceUpdateTimeout);
+                this.toleranceUpdateTimeout = setTimeout(() => {
+                    this.throttledPreviewUpdate();
+                }, 150); // Longer debounce for scroll wheel
+            }
+            
+            adjustEraserSize(e) {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent event from bubbling up to container
+                
+                // Determine which brush size to adjust based on active eraser
+                const currentSize = this.dynamicEraserActive ? this.dynamicBrushSize : this.brushSize;
+                const delta = e.deltaY > 0 ? -2 : 2; // Adjust by 2px increments for smoother control
+                const newSize = Math.max(5, Math.min(100, currentSize + delta));
+                
+                if (this.dynamicEraserActive) {
+                    // Update dynamic eraser size
+                    this.dynamicBrushSize = newSize;
+                    this.dynamicBrushSizeValue.textContent = this.dynamicBrushSize;
+                    this.dynamicBrushSizeInput.value = this.dynamicBrushSize;
+                } else {
+                    // Update static eraser size
+                    this.brushSize = newSize;
+                    this.brushSizeValue.textContent = this.brushSize;
+                    this.brushSizeInput.value = this.brushSize;
+                }
+                
+                // Update cursor to reflect new size
+                this.updateCursor();
+            }
+
+            handleAlgorithmChange(e) {
+                this.algorithm = e.target.value;
+                this.throttledPreviewUpdate();
+            }
+
+            handlePreviewModeChange(e) {
+                this.previewMode = e.target.value;
+                
+                // Clear any existing previews
+                this.clearPreview();
+                
+                if (this.previewMode === 'static') {
+                    this.clearStaticMask();
+                    this.brushControls.classList.add('active');
+                    this.dynamicEraserControls.style.display = 'none';
+                } else {
+                    this.deleteButton.style.display = 'none';
+                    this.brushControls.classList.remove('active');
+                    this.dynamicEraserControls.style.display = 'block';
+                }
+                
+                this.updateCursor();
+            }
+
+            handleEdgeSensitivityChange(e) {
+                // Update display value immediately for responsive UI
+                this.edgeSensitivity = parseInt(e.target.value, 10);
+                this.edgeSensitivityValue.textContent = this.edgeSensitivity;
+                
+                // Debounce the actual preview update for better performance
+                clearTimeout(this.edgeSensitivityUpdateTimeout);
+                this.edgeSensitivityUpdateTimeout = setTimeout(() => {
+                    this.throttledPreviewUpdate();
+                }, 150); // 150ms debounce - only update after user stops moving slider
+            }
+
+            handleFeatherRadiusChange(e) {
+                this.featherRadius = parseInt(e.target.value, 10);
+                this.featherRadiusValue.textContent = this.featherRadius;
+                this.throttledPreviewUpdate();
+            }
+
+            handleSmoothingPassesChange(e) {
+                this.smoothingPasses = parseInt(e.target.value, 10);
+                this.smoothingPassesValue.textContent = this.smoothingPasses;
+                this.throttledPreviewUpdate();
+            }
+
+            handleShrinkMaskChange(e) {
+                this.shrinkMask = parseInt(e.target.value, 10);
+                this.shrinkMaskValue.textContent = this.shrinkMask;
+                this.throttledPreviewUpdate();
+            }
+
+            // ====== ERASER TOOL METHODS ======
+            toggleStaticEraser() {
+                this.staticEraserActive = !this.staticEraserActive;
+                this.eraserBrushBtn.classList.toggle('active', this.staticEraserActive);
+                this.eraserBrushBtn.textContent = this.staticEraserActive ? 'Disable Eraser' : 'Enable Eraser';
+                
+                // Clear static mask preview when eraser is enabled, restore when disabled
+                if (this.staticEraserActive) {
+                    this.clearPreview();
+                } else if (this.previewMode === 'static' && this.isStaticMaskSet) {
+                    // Restore static mask preview
+                    this.showStaticMaskPreview();
+                }
+                
+                this.updateCursor();
+            }
+
+            handleBrushSizeChange(e) {
+                this.brushSize = parseInt(e.target.value, 10);
+                this.brushSizeValue.textContent = this.brushSize;
+                this.updateCursor();
+            }
+
+            handleBrushOpacityChange(e) {
+                this.brushOpacity = parseInt(e.target.value, 10);
+                this.brushOpacityValue.textContent = this.brushOpacity;
+            }
+
+            drawStaticEraser(pos) {
+                if (!this.staticEraserActive) return;
+                
+                const radius = this.brushSize / 2;
+                const opacity = this.brushOpacity / 100;
+                
+                // Get canvas context and set up erasing
+                const ctx = this.mainCtx;
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.fillStyle = `rgba(0, 0, 0, ${opacity})`;
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.restore();
+                
+                // Update image data
+                this.imageData = ctx.getImageData(0, 0, this.mainCanvas.width, this.mainCanvas.height);
+            }
+            
+            drawStaticEraserStroke(startPos, endPos) {
+                if (!this.staticEraserActive) return;
+                
+                const distance = Math.sqrt(
+                    Math.pow(endPos.x - startPos.x, 2) + 
+                    Math.pow(endPos.y - startPos.y, 2)
+                );
+                
+                const steps = Math.max(1, Math.floor(distance / 2));
+                
+                for (let i = 0; i <= steps; i++) {
+                    const t = i / steps;
+                    const x = startPos.x + (endPos.x - startPos.x) * t;
+                    const y = startPos.y + (endPos.y - startPos.y) * t;
+                    this.drawStaticEraser({ x, y });
+                }
+            }
+
+            updateCursor() {
+                const isEraserActive = this.dynamicEraserActive || this.staticEraserActive;
+                
+                // Update canvas container class for cursor behavior
+                this.canvasContainer.classList.toggle('eraser-mode', isEraserActive);
+                
+                if (this.isPanning) {
+                    this.mainCanvas.style.cursor = 'grabbing';
+                } else if (isEraserActive) {
+                    const size = Math.max(8, Math.min(32, (this.dynamicEraserActive ? this.dynamicBrushSize : this.brushSize) / 3));
+                    this.mainCanvas.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size/2}" cy="${size/2}" r="${size/2-1}" fill="none" stroke="white" stroke-width="2"/><circle cx="${size/2}" cy="${size/2}" r="${size/2-1}" fill="none" stroke="black" stroke-width="1"/></svg>') ${size/2} ${size/2}, crosshair`;
+                } else {
+                    this.mainCanvas.style.cursor = 'crosshair';
+                }
+            }
+
+            // ====== ZOOM METHODS ======
+            zoomIn() {
+                this.zoomLevel = Math.min(this.zoomLevel * 1.2, 5);
+                this.updateZoom();
+            }
+            
+            zoomOut() {
+                this.zoomLevel = Math.max(this.zoomLevel / 1.2, 0.1);
+                this.updateZoom();
+            }
+            
+            zoomTo100() {
+                if (!this.imageData) return;
+                
+                // Set zoom to 100% (1:1 scale)
+                this.zoomLevel = 1;
+                this.updateZoom();
+            }
+            
+            zoomToFit() {
+                if (!this.imageData) return;
+                
+                // Calculate zoom to fit viewport (with some padding)
+                const containerWidth = this.canvasContainer.clientWidth - 40;
+                const containerHeight = this.canvasContainer.clientHeight - 40;
+                const scaleX = containerWidth / this.originalWidth;
+                const scaleY = containerHeight / this.originalHeight;
+                const fitScale = Math.min(scaleX, scaleY, 1);
+                
+                this.zoomLevel = fitScale;
+                this.updateZoom();
+            }
+            
+            updateZoom() {
+                this.applyTransform();
+            }
+
+            applyTransform() {
+                // Calculate the actual display size based on zoom
+                const baseWidth = this.originalWidth;
+                const baseHeight = this.originalHeight;
+                const displayWidth = baseWidth * this.zoomLevel;
+                const displayHeight = baseHeight * this.zoomLevel;
+                
+                // Update canvas wrapper size to create scrollable area when needed
+                this.canvasWrapper.style.width = displayWidth + 'px';
+                this.canvasWrapper.style.height = displayHeight + 'px';
+                
+                // Apply zoom to canvases
+                this.mainCanvas.style.width = displayWidth + 'px';
+                this.mainCanvas.style.height = displayHeight + 'px';
+                
+                this.previewCanvas.style.width = displayWidth + 'px';
+                this.previewCanvas.style.height = displayHeight + 'px';
+                
+                this.updateZoomDisplay();
+            }
+            
+            updateZoomDisplay() {
+                const percentage = Math.round(this.zoomLevel * 100);
+                this.zoomLevelDisplay.textContent = `${percentage}%`;
+            }
+            
+            handlePanStart(e) {
+                if (e.button !== 0) return; // Only left mouse button
+                
+                // Don't pan if eraser tools are active
+                if (this.dynamicEraserActive || this.staticEraserActive) {
+                    return;
+                }
+                
+                // Don't pan if clicking directly on canvas for normal operations
+                if (e.target === this.mainCanvas || e.target === this.previewCanvas) {
+                    return;
+ }
+                
+                this.isDragging = true;
+                this.lastPanX = e.clientX;
+                this.lastPanY = e.clientY;
+                this.canvasContainer.style.cursor = 'grabbing';
+            }
+            
+            handlePanMove(e) {
+                // Don't pan if eraser tools are active and we're drawing
+                if ((this.dynamicEraserActive || this.staticEraserActive) && this.isDrawing) {
+                    return;
+                }
+                
+                if (!this.isDragging) return;
+                
+                const deltaX = e.clientX - this.lastPanX;
+                const deltaY = e.clientY - this.lastPanY;
+                
+                this.panX += deltaX / this.zoomLevel;
+                this.panY += deltaY / this.zoomLevel;
+                
+                this.lastPanX = e.clientX;
+                this.lastPanY = e.clientY;
+                
+                this.updateZoom();
+            }
+            
+            handlePanEnd() {
+                this.isDragging = false;
+                this.canvasContainer.style.cursor = 'default';
+            }
+            
+            // ====== DYNAMIC ERASER METHODS ======
+            toggleDynamicEraser() {
+                this.dynamicEraserActive = !this.dynamicEraserActive;
+                this.dynamicEraserBtn.classList.toggle('active', this.dynamicEraserActive);
+                this.dynamicEraserBtn.textContent = this.dynamicEraserActive ? 'Disable Eraser' : 'Enable Eraser';
+                
+                // Clear preview when eraser is enabled, restore when disabled
+                if (this.dynamicEraserActive) {
+                    this.clearPreview();
+                } else if (this.previewMode === 'dynamic' && this.lastMousePos) {
+                    // Restore preview if mouse is still over canvas
+                    this.showPreviewAtPos(this.lastMousePos);
+                }
+                
+                this.updateCursor();
+            }
+            
+            handleDynamicBrushSizeChange(e) {
+                this.dynamicBrushSize = parseInt(e.target.value);
+                this.dynamicBrushSizeValue.textContent = this.dynamicBrushSize;
+                this.updateCursor();
+            }
+            
+            handleDynamicBrushOpacityChange(e) {
+                this.dynamicBrushOpacity = parseFloat(e.target.value);
+                this.dynamicBrushOpacityValue.textContent = Math.round(this.dynamicBrushOpacity * 100) + '%';
+            }
+            
+            drawDynamicEraser(pos) {
+                if (!this.dynamicEraserActive) return;
+                
+                const radius = this.dynamicBrushSize / 2;
+                const opacity = this.dynamicBrushOpacity;
+                
+                // Get canvas context and set up erasing
+                const ctx = this.mainCtx;
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.fillStyle = `rgba(0, 0, 0, ${opacity})`;
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.restore();
+                
+                // Update image data
+                this.imageData = ctx.getImageData(0, 0, this.mainCanvas.width, this.mainCanvas.height);
+            }
+            
+            drawDynamicEraserStroke(startPos, endPos) {
+                if (!this.dynamicEraserActive) return;
+                
+                const distance = Math.sqrt(
+                    Math.pow(endPos.x - startPos.x, 2) + 
+                    Math.pow(endPos.y - startPos.y, 2)
+                );
+                
+                const steps = Math.max(1, Math.floor(distance / 2));
+                
+                for (let i = 0; i <= steps; i++) {
+                    const t = i / steps;
+                    const x = startPos.x + (endPos.x - startPos.x) * t;
+                    const y = startPos.y + (endPos.y - startPos.y) * t;
+                    this.drawDynamicEraser({ x, y });
+                }
+            }
+
+            // ====== KEYBOARD METHODS ======
+            handleKeyDown(e) {
+                if (e.key === 'Shift') {
+                    this.isShiftPressed = true;
+                }
+            }
+            
+            handleKeyUp(e) {
+                if (e.key === 'Shift') {
+                    this.isShiftPressed = false;
+                }
+            }
+
+            handleMouseDown(e) {
+                if (!this.imageData) return;
+                
+                if (e.button === 2) { // Right mouse button - start panning
+                    e.preventDefault();
+                    this.isPanning = true;
+                    this.panStartX = e.clientX;
+                    this.panStartY = e.clientY;
+                    this.scrollStartX = this.canvasContainer.scrollLeft;
+                    this.scrollStartY = this.canvasContainer.scrollTop;
+                    this.mainCanvas.style.cursor = 'grabbing';
+                    return;
+                }
+                
+                if (e.button !== 0) return; // Only handle left mouse button
+                
+                const pos = this.getMousePos(e);
+                
+                // Check for dynamic eraser in dynamic mode
+                if (this.previewMode === 'dynamic' && this.dynamicEraserActive) {
+                    this.isDrawing = true;
+                    this.lastDrawPos = pos;
+                    this.saveToUndoStack();
+                    this.drawDynamicEraser(pos);
+                    return;
+                }
+                
+                // Check for static eraser in static mode
+                if (this.previewMode === 'static' && this.staticEraserActive) {
+                    this.isDrawing = true;
+                    this.lastDrawPos = pos;
+                    this.saveToUndoStack();
+                    this.drawStaticEraser(pos);
+                    return;
+                }
+                
+                // Otherwise use normal click behavior
+                this.deleteArea(e);
+            }
+
+            handleMouseMoveForDrawing(e) {
+                const pos = this.getMousePos(e);
+                
+                if (this.isDrawing) {
+                    // Handle dynamic eraser
+                    if (this.previewMode === 'dynamic' && this.dynamicEraserActive) {
+                        this.drawDynamicEraserStroke(this.lastDrawPos, pos);
+                        this.lastDrawPos = pos;
+                        return;
+                    }
+                    
+                    // Handle static eraser
+                    if (this.previewMode === 'static' && this.staticEraserActive) {
+                        this.drawStaticEraserStroke(this.lastDrawPos, pos);
+                        this.lastDrawPos = pos;
+                        return;
+                    }
+                } else {
+                    // Normal mouse move behavior
+                    this.handleMouseMove(e);
+                }
+            }
+
+            handleMouseUp(e) {
+                if (e && e.button === 2) { // Right mouse button - stop panning
+                    this.isPanning = false;
+                    this.updateCursor();
+                    return;
+                }
+                
+                this.isDrawing = false;
+                this.lastDrawPos = null;
+            }
+
+            // ====== BACKGROUND REMOVAL ======
+            deleteArea(e) {
+                const pos = this.getMousePos(e);
+                
+                if (this.previewMode === 'static') {
+                    // In static mode, clicking sets the mask
+                    // Check if shift is pressed for additive selection
+                    const isAdditive = this.isShiftPressed;
+                    this.setStaticMask(pos, isAdditive);
+                    return;
+                }
+                
+                // Dynamic mode - immediate deletion
+                this.saveToUndoStack();
+                
+                const rawMask = this.floodFill(pos.x, pos.y, this.tolerance, this.edgeSensitivity);
+                const width = this.imageData.width;
+                const height = this.imageData.height;
+                
+                // Apply enhanced morphological smoothing
+                let processedMask = this.advancedMorphologicalSmoothing(rawMask, width, height, this.smoothingPasses);
+                
+                // Apply mask expansion to include more background/halo areas
+                if (this.shrinkMask > 0) {
+                    processedMask = this.expandMaskOperation(processedMask, width, height, this.shrinkMask);
+                }
+                
+                // Apply enhanced edge feathering for smooth alpha transitions
+                const featheredMask = this.createFeatheredMask(processedMask, width, height, this.featherRadius);
+                
+                const data = this.imageData.data;
+                for (let i = 0; i < featheredMask.length; i++) {
+                    const alpha = featheredMask[i];
+                    if (alpha > 0) {
+                        const pixelIndex = i * 4;
+                        // Apply smooth alpha transition instead of hard cutoff
+                        data[pixelIndex + 3] = Math.max(0, data[pixelIndex + 3] * (1 - alpha));
+                    }
+                }
+                
+                this.mainCtx.putImageData(this.imageData, 0, 0);
+                this.clearPreview();
+            }
+
+            // ====== DOWNLOAD ======
+            downloadImage() {
+                const link = document.createElement('a');
+                link.download = 'background-removed-image.png';
+                link.href = this.mainCanvas.toDataURL();
+                link.click();
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            new MagicWandEditor();
+        });
+    </script>
+</body>
+</html>
