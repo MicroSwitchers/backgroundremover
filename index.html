@@ -18,7 +18,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px 10px;
+            padding: 8px 6px;
             color: #e0e0e0;
             margin: 0;
             position: relative;
@@ -39,38 +39,38 @@
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 8px;
             background: linear-gradient(135deg, rgba(0, 122, 204, 0.1) 0%, rgba(0, 210, 211, 0.1) 100%);
-            border-radius: 16px;
-            padding: 24px 32px;
+            border-radius: 10px;
+            padding: 8px 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
-            max-width: 600px;
+            width: 100%;
+            max-width: 95vw;
         }
 
         .header-content {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 16px;
-            margin-bottom: 12px;
+            gap: 10px;
         }
 
         .header-icon {
-            width: 48px;
-            height: 48px;
-            filter: drop-shadow(0 4px 12px rgba(0, 122, 204, 0.3));
+            width: 28px;
+            height: 28px;
+            filter: drop-shadow(0 2px 6px rgba(0, 122, 204, 0.3));
             animation: float 3s ease-in-out infinite;
         }
 
         @keyframes float {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-4px); }
+            50% { transform: translateY(-3px); }
         }
 
         .header h1 {
-            font-size: 2.2em;
+            font-size: 1.4em;
             margin: 0;
             background: linear-gradient(135deg, #007acc, #00d2d3);
             -webkit-background-clip: text;
@@ -81,26 +81,11 @@
             text-shadow: none;
         }
 
-        .header-subtitle {
-            font-size: 1em;
-            color: #b0b0b0;
-            margin: 0;
-            font-weight: 400;
-            opacity: 0.85;
-        }
-
-        .header-tagline {
-            font-size: 0.85em;
-            color: #888;
-            margin: 8px 0 0 0;
-            font-style: italic;
-            opacity: 0.7;
-        }
-
         .main-layout {
             display: flex;
-            gap: 15px;
+            gap: 8px;
             align-items: flex-start;
+            width: 100%;
             max-width: 95vw;
             flex-wrap: wrap;
             justify-content: center;
@@ -109,15 +94,17 @@
         .left-controls {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            min-width: 250px;
+            gap: 6px;
+            min-width: 200px;
+            max-width: 220px;
         }
 
         .right-controls {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            min-width: 250px;
+            gap: 6px;
+            min-width: 200px;
+            max-width: 220px;
         }
 
         .image-area {
@@ -125,18 +112,18 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 0;
         }
 
         .controls {
             background: #2a2a2a;
             border-radius: 4px;
-            padding: 12px;
+            padding: 8px;
             border: 1px solid #444;
         }
 
         .control-section {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .control-section:last-child {
@@ -144,19 +131,19 @@
         }
 
         .control-section h3 {
-            font-size: 13px;
-            margin-bottom: 8px;
+            font-size: 11px;
+            margin-bottom: 6px;
             color: #e0e0e0;
             border-bottom: 1px solid #444;
-            padding-bottom: 4px;
+            padding-bottom: 3px;
         }
-        
+
         .control-group {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            gap: 5px;
-            margin-bottom: 10px;
+            gap: 3px;
+            margin-bottom: 7px;
         }
 
         .control-group:last-child {
@@ -164,7 +151,7 @@
         }
 
         .control-group label {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 500;
             opacity: 0.9;
             color: #d0d0d0;
@@ -186,11 +173,11 @@
         .file-button {
             background: #007acc;
             color: white;
-            padding: 8px 16px;
+            padding: 6px 12px;
             border: none;
             border-radius: 3px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
             transition: all 0.2s ease;
         }
@@ -263,17 +250,17 @@
         .action-buttons {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 5px;
         }
 
         .action-button {
             background: #3a3a3a;
             color: #e0e0e0;
-            padding: 6px 12px;
+            padding: 5px 10px;
             border: 1px solid #555;
             border-radius: 3px;
             cursor: pointer;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 500;
             transition: all 0.2s ease;
         }
@@ -310,14 +297,14 @@
             position: relative;
             background: #2a2a2a;
             border-radius: 4px;
-            padding: 12px;
+            padding: 8px;
             border: 1px solid #444;
             width: 80vw;
-            height: 75vh;
+            height: 82vh;
             max-width: 1200px;
-            max-height: 800px;
-            min-width: 500px;
-            min-height: 400px;
+            max-height: 900px;
+            min-width: 400px;
+            min-height: 300px;
             overflow: auto;
             cursor: grab;
             display: flex;
@@ -412,12 +399,11 @@
         }
 
         .brush-controls {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(10px);
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.37);
+            border-radius: 4px;
+            padding: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             display: none;
         }
 
@@ -458,49 +444,49 @@
 
         .zoom-controls {
             position: absolute;
-            top: 50px;
-            right: 15px;
+            top: 8px;
+            right: 8px;
             display: flex;
-            gap: 5px;
+            gap: 4px;
             z-index: 1000;
-            background: rgba(26, 26, 26, 0.9);
-            padding: 8px;
-            border-radius: 8px;
+            background: rgba(26, 26, 26, 0.92);
+            padding: 5px 6px;
+            border-radius: 6px;
             border: 1px solid #444;
+            pointer-events: all;
         }
 
         .zoom-button {
             background: rgba(0, 0, 0, 0.7);
             color: white;
             border: none;
-            width: 30px;
-            height: 30px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
+            transition: background 0.2s ease;
         }
 
         .zoom-button:hover {
-            background: rgba(0, 0, 0, 0.9);
-            transform: scale(1.1);
+            background: rgba(0, 122, 204, 0.8);
         }
 
         .zoom-button[title="Zoom to 100%"] {
-            width: 40px;
-            font-size: 12px;
-            border-radius: 15px;
+            width: 32px;
+            font-size: 10px;
+            border-radius: 12px;
         }
 
         .zoom-level {
             background: rgba(0, 0, 0, 0.7);
             color: white;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 12px;
+            padding: 3px 7px;
+            border-radius: 12px;
+            font-size: 10px;
             font-weight: bold;
             user-select: none;
         }
@@ -520,72 +506,49 @@
         .no-image {
             color: white;
             text-align: center;
-            padding: 40px;
-            font-size: 18px;
+            padding: 20px;
+            font-size: 14px;
             opacity: 0.7;
         }
 
-        .tolerance-control {
-            background: #2a2a2a;
-            border-radius: 4px;
-            padding: 10px;
-            border: 1px solid #444;
-            margin-bottom: 10px;
-            width: 100%;
-            max-width: 300px;
-        }
-
-        .tolerance-control label {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-
         .tolerance-label {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 600;
             color: #e0e0e0;
         }
 
         .tolerance-hint {
-            font-size: 10px;
+            font-size: 9px;
             color: #888;
             font-style: italic;
-        }
-
-        .tolerance-control input[type="range"] {
-            width: 100%;
+            opacity: 0.8;
         }
 
         /* Responsive Design */
-        @media (max-width: 1200px) {
+        @media (max-width: 1100px) {
             .main-layout {
                 flex-direction: column;
                 align-items: center;
             }
-            
+
             .left-controls, .right-controls {
-                min-width: 300px;
+                min-width: 280px;
                 max-width: 500px;
             }
-            
+
             .canvas-container {
+                width: 90vw;
                 max-width: 90vw;
             }
         }
 
         @media (max-width: 768px) {
             .left-controls, .right-controls {
-                min-width: 250px;
+                min-width: 220px;
             }
-            
+
             .header h1 {
-                font-size: 1.5em;
-            }
-            
-            .control-section h3 {
-                font-size: 12px;
+                font-size: 1.1em;
             }
         }
     </style>
@@ -594,12 +557,8 @@
     <div class="header">
         <div class="header-content">
             <img src="backgroundremover.svg" alt="Background Remover" class="header-icon">
-            <div>
-                <h1>Background Remover</h1>
-                <p class="header-subtitle">Smart Background Removal Tool</p>
-            </div>
+            <h1>Background Remover</h1>
         </div>
-        <p class="header-tagline">Remove backgrounds with precision edge detection</p>
     </div>
 
     <div class="main-layout">
@@ -621,22 +580,25 @@
                 <div class="control-section">
                     <h3>🎯 Selection</h3>
                     <div class="control-group">
+                        <label for="toleranceSlider">
+                            <span class="tolerance-label">Tolerance: <span id="toleranceValue">25</span></span>
+                            <span class="tolerance-hint"> (scroll wheel)</span>
+                        </label>
+                        <input type="range" id="toleranceSlider" min="1" max="100" value="25" style="width:100%">
+                    </div>
+                    <div class="control-group">
                         <label for="algorithmSelector">Algorithm</label>
                         <select id="algorithmSelector" class="algorithm-selector">
-                            <option value="rgb">RGB Distance (Alternate - Follows Colours)</option>
-                            <option value="lab" selected>LAB (Default - Best Edge Detection)</option>
+                            <option value="rgb">RGB Distance (Alternate)</option>
+                            <option value="lab" selected>LAB (Default - Best)</option>
                         </select>
                     </div>
                     <div class="control-group">
                         <label for="previewMode">Preview Mode</label>
                         <select id="previewMode" class="algorithm-selector">
                             <option value="dynamic" selected>Dynamic (Live Preview)</option>
-                            <option value="static">Static (Set & Edit)</option>
+                            <option value="static">Static (Set &amp; Edit)</option>
                         </select>
-                        <p style="font-size: 9px; opacity: 0.7; margin-top: 3px; line-height: 1.2;">
-                            Dynamic: Hover to preview, click to delete<br>
-                            Static: Click to set mask, edit, then delete
-                        </p>
                     </div>
                     <div class="control-group">
                         <label for="edgeSensitivity">Edge Sensitivity: <span id="edgeSensitivityValue">200</span></label>
@@ -649,16 +611,7 @@
 
         <!-- Image Area -->
         <div class="image-area">
-            <!-- Tolerance Control (above image for easy access) -->
-            <div class="tolerance-control">
-                <label for="toleranceSlider">
-                    <span class="tolerance-label">Tolerance: <span id="toleranceValue">25</span></span>
-                    <span class="tolerance-hint">🖱️ Use scroll wheel on image to adjust</span>
-                </label>
-                <input type="range" id="toleranceSlider" min="1" max="100" value="25">
-            </div>
-            
-            <!-- Zoom controls positioned outside and over the canvas container -->
+            <!-- Zoom controls overlay (positioned over canvas via image-area) -->
             <div class="zoom-controls">
                 <button id="zoomIn" class="zoom-button" title="Zoom In">+</button>
                 <div id="zoomLevel" class="zoom-level">100%</div>
@@ -666,7 +619,6 @@
                 <button id="zoom100" class="zoom-button" title="Zoom to 100%">1:1</button>
                 <button id="zoomFit" class="zoom-button" title="Fit to Window">⌂</button>
             </div>
-            
             <div class="canvas-container">
                 <div id="canvasWrapper" class="canvas-wrapper" style="display: none;">
                     <canvas id="mainCanvas"></canvas>
